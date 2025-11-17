@@ -1,71 +1,101 @@
+import { useState } from 'react'
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import Features from './components/Features'
+import Pricing from './components/Pricing'
+import Contact from './components/Contact'
+
 function App() {
+  const [showLead, setShowLead] = useState(false)
+  const [leadStatus, setLeadStatus] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  const submitLead = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setLeadStatus(null)
+    const form = new FormData(e.currentTarget)
+    const payload = {
+      full_name: form.get('full_name'),
+      email: form.get('email'),
+      phone: form.get('phone') || undefined,
+      company: form.get('company') || undefined,
+      message: form.get('message') || undefined,
+      source: 'landing-hero'
+    }
+
+    try {
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+      const res = await fetch(`${baseUrl}/api/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!res.ok) throw new Error('Erreur serveur')
+      setLeadStatus({ ok: true, msg: 'Merci ! Nous vous recontactons très vite.' })
+      e.currentTarget.reset()
+    } catch (err) {
+      setLeadStatus({ ok: false, msg: "Impossible d'enregistrer votre demande." })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
-
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
+    <div className="min-h-screen bg-slate-900">
+      <Navbar />
+      <Hero onLead={() => setShowLead(true)} />
+      {showLead && (
+        <section className="bg-slate-950 py-10">
+          <div className="max-w-4xl mx-auto px-4 md:px-6">
+            <div className="bg-slate-900/70 border border-white/10 rounded-2xl p-6">
+              <h3 className="text-white text-2xl font-semibold">Demander une démo</h3>
+              {leadStatus && (
+                <div className={`mt-3 p-3 rounded-lg ${leadStatus.ok ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'}`}>{leadStatus.msg}</div>
+              )}
+              <form onSubmit={submitLead} className="mt-4 grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-blue-200/80">Nom complet</label>
+                  <input name="full_name" required className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white" />
+                </div>
+                <div>
+                  <label className="text-sm text-blue-200/80">Email</label>
+                  <input type="email" name="email" required className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white" />
+                </div>
+                <div>
+                  <label className="text-sm text-blue-200/80">Téléphone</label>
+                  <input name="phone" className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white" />
+                </div>
+                <div>
+                  <label className="text-sm text-blue-200/80">Société</label>
+                  <input name="company" className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm text-blue-200/80">Message</label>
+                  <textarea name="message" rows="4" className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-white" />
+                </div>
+                <div className="md:col-span-2 flex gap-3">
+                  <button disabled={loading} className="px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold disabled:opacity-60">{loading ? 'Envoi...' : 'Envoyer'}</button>
+                  <button type="button" onClick={() => setShowLead(false)} className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white">Annuler</button>
+                </div>
+              </form>
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
+        </section>
+      )}
+      <Features />
+      <Pricing onLead={() => setShowLead(true)} />
+      <Contact />
+      <footer className="bg-slate-950 py-10 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-blue-200/70">© {new Date().getFullYear()} ChatImmo. Tous droits réservés.</div>
+          <div className="flex items-center gap-6 text-blue-200/70">
+            <a href="#" className="hover:text-white">Mentions légales</a>
+            <a href="#" className="hover:text-white">Confidentialité</a>
+            <a href="#" className="hover:text-white">Contact</a>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }
